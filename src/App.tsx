@@ -5,7 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
@@ -16,7 +18,13 @@ import ListingNew from "./pages/ListingNew.tsx";
 import ListingEdit from "./pages/ListingEdit.tsx";
 import Marketplace from "./pages/Marketplace.tsx";
 import ListingDetail from "./pages/ListingDetail.tsx";
+import Requests from "./pages/Requests.tsx";
+import Notifications from "./pages/Notifications.tsx";
 import Settings from "./pages/Settings.tsx";
+import AdminOverview from "./pages/admin/AdminOverview.tsx";
+import AdminWaitlist from "./pages/admin/AdminWaitlist.tsx";
+import AdminListings from "./pages/admin/AdminListings.tsx";
+import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -52,7 +60,22 @@ const App = () => (
                   path="/dashboard/listings/:id/edit"
                   element={<ListingEdit />}
                 />
+                <Route path="/dashboard/requests" element={<Requests />} />
+                <Route
+                  path="/dashboard/notifications"
+                  element={<Notifications />}
+                />
                 <Route path="/dashboard/settings" element={<Settings />} />
+              </Route>
+            </Route>
+
+            {/* Admin console */}
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<AdminOverview />} />
+                <Route path="/admin/waitlist" element={<AdminWaitlist />} />
+                <Route path="/admin/listings" element={<AdminListings />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
               </Route>
             </Route>
 
