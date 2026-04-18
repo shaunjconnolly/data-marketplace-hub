@@ -17,3 +17,24 @@ export async function captureClientError(
     // swallow
   }
 }
+
+/**
+ * Convenience wrapper that accepts an unknown error value (Error, string, or
+ * anything else) and forwards it to captureClientError. Also logs to the
+ * browser console so developers can see issues during local dev.
+ */
+export function captureError(err: unknown, context: Record<string, unknown> = {}) {
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+        ? err
+        : "Unknown error";
+  const ctx = {
+    ...context,
+    ...(err instanceof Error ? { stack: err.stack } : {}),
+  };
+  // eslint-disable-next-line no-console
+  console.error("[captureError]", message, ctx);
+  void captureClientError(message, ctx);
+}

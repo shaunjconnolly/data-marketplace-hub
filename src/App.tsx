@@ -12,7 +12,10 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Listings from "./pages/Listings.tsx";
+import ListingNew from "./pages/ListingNew.tsx";
+import ListingEdit from "./pages/ListingEdit.tsx";
 import Marketplace from "./pages/Marketplace.tsx";
+import ListingDetail from "./pages/ListingDetail.tsx";
 import Settings from "./pages/Settings.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -30,6 +33,10 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
+            {/* Public marketplace */}
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace/:id" element={<ListingDetail />} />
+
             {/* Onboarding: requires auth but NOT onboarding-complete */}
             <Route element={<ProtectedRoute requireOnboarded={false} />}>
               <Route path="/onboarding" element={<Onboarding />} />
@@ -40,7 +47,11 @@ const App = () => (
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dashboard/listings" element={<Listings />} />
-                <Route path="/dashboard/marketplace" element={<Marketplace />} />
+                <Route path="/dashboard/listings/new" element={<ListingNew />} />
+                <Route
+                  path="/dashboard/listings/:id/edit"
+                  element={<ListingEdit />}
+                />
                 <Route path="/dashboard/settings" element={<Settings />} />
               </Route>
             </Route>
