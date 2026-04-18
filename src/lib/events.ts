@@ -10,7 +10,9 @@ export async function captureClientError(
     // Note: captured_errors has no insert policy for clients by design.
     // This will be a no-op unless called from a context with admin rights.
     // Prefer routing errors through Edge Functions where possible.
-    await supabase.from("captured_errors").insert([{ message, context }]);
+    await supabase.from("captured_errors").insert([
+      { message, context: context as never },
+    ]);
   } catch {
     // swallow
   }
