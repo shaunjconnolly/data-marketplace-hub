@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_requests: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          id: string
+          listing_id: string
+          message: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_requests_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -71,6 +109,54 @@ export type Database = {
           message?: string
           resolved?: boolean
           stack?: string | null
+        }
+        Relationships: []
+      }
+      listings: {
+        Row: {
+          category: string
+          created_at: string
+          currency: string
+          description: string
+          id: string
+          price_per_record: number
+          published_at: string | null
+          sample_preview: Json
+          seller_id: string
+          status: string
+          title: string
+          total_records: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          currency?: string
+          description: string
+          id?: string
+          price_per_record: number
+          published_at?: string | null
+          sample_preview?: Json
+          seller_id: string
+          status?: string
+          title: string
+          total_records: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          id?: string
+          price_per_record?: number
+          published_at?: string | null
+          sample_preview?: Json
+          seller_id?: string
+          status?: string
+          title?: string
+          total_records?: number
+          updated_at?: string
         }
         Relationships: []
       }
