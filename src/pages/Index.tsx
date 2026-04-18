@@ -1,7 +1,14 @@
+import { forwardRef } from "react";
+import { Link } from "react-router-dom";
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/providers/AuthProvider";
 import { Lock, FileCheck2, Zap, Database } from "lucide-react";
 
 const Index = () => {
+  const { user, profile, loading } = useAuth();
+  const ctaTo = profile?.onboarding_completed ? "/dashboard" : "/onboarding";
+
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
@@ -9,6 +16,33 @@ const Index = () => {
         className="relative overflow-hidden"
         style={{ background: "var(--gradient-hero)" }}
       >
+        {/* Top nav */}
+        <nav className="container relative mx-auto flex items-center justify-between px-6 py-5">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-primary-foreground"
+          >
+            <Database className="h-5 w-5" />
+            <span className="text-sm font-semibold">Uber4Data</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            {!loading && user ? (
+              <Button asChild variant="secondary" size="sm">
+                <Link to={ctaTo}>Open dashboard</Link>
+              </Button>
+            ) : (
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+              >
+                <Link to="/auth">Sign in</Link>
+              </Button>
+            )}
+          </div>
+        </nav>
+
         {/* Decorative grid */}
         <div
           aria-hidden
@@ -25,7 +59,7 @@ const Index = () => {
           style={{ background: "var(--gradient-primary)" }}
         />
 
-        <div className="container relative mx-auto grid gap-12 px-6 py-20 md:grid-cols-2 md:items-center md:py-28 lg:py-32">
+        <div className="container relative mx-auto grid gap-12 px-6 pb-20 pt-12 md:grid-cols-2 md:items-center md:pb-28 md:pt-20 lg:pb-32">
           <div className="text-primary-foreground">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/80" />
@@ -120,17 +154,16 @@ const Index = () => {
   );
 };
 
-function FeatureCard({
-  icon,
-  title,
-  body,
-}: {
+type FeatureCardProps = {
   icon: React.ReactNode;
   title: string;
   body: string;
-}) {
-  return (
+};
+
+const FeatureCard = forwardRef<HTMLDivElement, FeatureCardProps>(
+  ({ icon, title, body }, ref) => (
     <div
+      ref={ref}
       className="group rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:border-primary/30"
       style={{ boxShadow: "var(--shadow-soft)" }}
     >
@@ -138,11 +171,10 @@ function FeatureCard({
         {icon}
       </div>
       <h3 className="mt-4 text-base font-semibold text-foreground">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        {body}
-      </p>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
     </div>
-  );
-}
+  ),
+);
+FeatureCard.displayName = "FeatureCard";
 
 export default Index;
