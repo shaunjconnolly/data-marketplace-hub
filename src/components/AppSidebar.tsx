@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const NAV = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard, end: true },
   { title: "My listings", url: "/dashboard/listings", icon: Database },
-  { title: "Marketplace", url: "/dashboard/marketplace", icon: ShoppingBag },
+  { title: "Marketplace", url: "/marketplace", icon: ShoppingBag },
   { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 

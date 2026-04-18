@@ -22,12 +22,12 @@ const Dashboard = () => {
           Hi {name}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Your workspace is ready. Listings and the marketplace come online in V3.
+          Your workspace is ready. Create listings or browse the marketplace below.
         </p>
       </header>
 
       <section className="mt-10 grid gap-4 md:grid-cols-3">
-        <StatCard label="Active listings" value="0" hint="Live in V3" />
+        <StatCard label="Active listings" value="0" hint="Live now" />
         <StatCard label="Open requests" value="0" hint="Live in V4" />
         <StatCard label="Earnings (MTD)" value="—" hint="Live in V9" />
       </section>
@@ -39,9 +39,7 @@ const Dashboard = () => {
             title="Your first listing"
             body="Upload a dataset to start selling. Anonymisation runs automatically."
             ctaLabel="List a dataset"
-            ctaTo="/dashboard/listings"
-            disabled
-            disabledHint="Available in V3"
+            ctaTo="/dashboard/listings/new"
           />
         )}
         {showBuyer && (
@@ -50,9 +48,7 @@ const Dashboard = () => {
             title="Browse the marketplace"
             body="Find compliant datasets and request access at per-record pricing."
             ctaLabel="Open marketplace"
-            ctaTo="/dashboard/marketplace"
-            disabled
-            disabledHint="Available in V3"
+            ctaTo="/marketplace"
           />
         )}
         {!role && (
