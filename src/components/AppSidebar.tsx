@@ -1,4 +1,12 @@
-import { LayoutDashboard, Database, ShoppingBag, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Database,
+  ShoppingBag,
+  Settings,
+  Inbox,
+  Bell,
+  ShieldCheck,
+} from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -16,18 +24,20 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 
 const NAV = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard, end: true },
   { title: "My listings", url: "/dashboard/listings", icon: Database },
+  { title: "Requests", url: "/dashboard/requests", icon: Inbox },
   { title: "Marketplace", url: "/marketplace", icon: ShoppingBag },
-  { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, signOut, isAdmin } = useAuth();
+  const unread = useUnreadNotifications();
 
   const initials = (profile?.display_name || user?.email || "?")
     .slice(0, 2)
@@ -68,9 +78,69 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/dashboard/notifications"
+                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  >
+                    <Bell className="h-4 w-4" />
+                    {!collapsed && (
+                      <span className="flex flex-1 items-center justify-between">
+                        <span>Notifications</span>
+                        {unread > 0 && (
+                          <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                            {unread > 99 ? "99+" : unread}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    {collapsed && unread > 0 && (
+                      <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/dashboard/settings"
+                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  >
+                    <Settings className="h-4 w-4" />
+                    {!collapsed && <span>Settings</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/admin"
+                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      {!collapsed && <span>Admin console</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
