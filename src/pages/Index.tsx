@@ -26,6 +26,14 @@ const Index = () => {
             <span className="text-sm font-semibold">Uber4Data</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+            >
+              <Link to="/marketplace">Marketplace</Link>
+            </Button>
             {!loading && user ? (
               <Button asChild variant="secondary" size="sm">
                 <Link to={ctaTo}>Open dashboard</Link>
