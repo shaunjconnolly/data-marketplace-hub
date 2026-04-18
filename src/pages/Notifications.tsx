@@ -121,8 +121,6 @@ const Notifications = () => {
         ) : (
           items.map((n) => {
             const unread = !n.read_at;
-            const Wrapper: typeof Link = (props) =>
-              n.action_url ? <Link {...props} to={n.action_url} /> : (props.children as never);
             const inner = (
               <div
                 className={`rounded-2xl border bg-card p-5 transition-colors ${unread ? "border-primary/40" : "border-border"}`}
