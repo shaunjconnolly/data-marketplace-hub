@@ -8,9 +8,11 @@ export const listingSchema = z.object({
     .trim()
     .min(20, "Description must be at least 20 characters")
     .max(4000),
-  category: z.enum(LISTING_CATEGORIES as unknown as [string, ...string[]], {
-    errorMap: () => ({ message: "Pick a category" }),
-  }),
+  category: z
+    .string()
+    .refine((v) => (LISTING_CATEGORIES as readonly string[]).includes(v), {
+      message: "Pick a category",
+    }),
   price_per_record: z.coerce
     .number()
     .min(0, "Price must be 0 or more")

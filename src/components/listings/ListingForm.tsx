@@ -83,9 +83,10 @@ export function ListingForm({ initial }: Props) {
         category: parsed.data.category,
         price_per_record: parsed.data.price_per_record,
         total_records: parsed.data.total_records,
-        sample_preview: sample,
+        sample_preview: sample as never,
         status: targetStatus,
-        published_at: targetStatus === "published" ? new Date().toISOString() : null,
+        published_at:
+          targetStatus === "published" ? new Date().toISOString() : null,
         seller_id: user.id,
       };
 
