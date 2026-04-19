@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Database, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, Database, Download, Loader2, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -34,6 +36,11 @@ type Listing = {
   seller_id: string;
 };
 
+type Purchase = {
+  id: string;
+  payment_status: string;
+};
+
 const ListingDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -43,9 +50,15 @@ const ListingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [requestStatus, setRequestStatus] =
     useState<AccessRequestStatus | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [purchase, setPurchase] = useState<Purchase | null>(null);
+
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [recordCount, setRecordCount] = useState<number>(1000);
 
   useEffect(() => {
     async function load() {
@@ -65,16 +78,28 @@ const ListingDetail = () => {
         return;
       }
       setListing(data as Listing);
+      setRecordCount(Math.min(1000, (data as Listing).total_records));
       setLoading(false);
 
       if (user) {
-        const { data: req } = await supabase
-          .from("access_requests")
-          .select("status")
-          .eq("listing_id", id)
-          .eq("buyer_id", user.id)
-          .maybeSingle();
+        const [{ data: req }, { data: pur }] = await Promise.all([
+          supabase
+            .from("access_requests")
+            .select("status")
+            .eq("listing_id", id)
+            .eq("buyer_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("purchases")
+            .select("id, payment_status")
+            .eq("listing_id", id)
+            .eq("buyer_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
         if (req) setRequestStatus(req.status as AccessRequestStatus);
+        if (pur) setPurchase(pur as Purchase);
       }
     }
     load();
@@ -84,7 +109,7 @@ const ListingDetail = () => {
 
   async function submitRequest() {
     if (!user || !listing) return;
-    setSubmitting(true);
+    setSubmittingRequest(true);
     try {
       const { error } = await supabase.from("access_requests").insert({
         listing_id: listing.id,
@@ -93,7 +118,7 @@ const ListingDetail = () => {
       });
       if (error) throw error;
       setRequestStatus("pending");
-      setDialogOpen(false);
+      setRequestDialogOpen(false);
       setMessage("");
       toast.success("Request sent to the seller");
     } catch (err) {
@@ -102,11 +127,68 @@ const ListingDetail = () => {
         err instanceof Error ? err.message : "Could not send request",
       );
     } finally {
-      setSubmitting(false);
+      setSubmittingRequest(false);
     }
   }
 
-  function onCtaClick() {
+  async function confirmPurchase() {
+    if (!user || !listing) return;
+    const count = Math.max(
+      1,
+      Math.min(listing.total_records, Math.floor(recordCount || 0)),
+    );
+    setPurchasing(true);
+    try {
+      const total = +(listing.price_per_record * count).toFixed(4);
+      const { data, error } = await supabase
+        .from("purchases")
+        .insert({
+          listing_id: listing.id,
+          buyer_id: user.id,
+          price_per_record: listing.price_per_record,
+          record_count: count,
+          total_amount: total,
+          currency: listing.currency,
+          payment_provider: "mock",
+          payment_status: "paid",
+          paid_at: new Date().toISOString(),
+        })
+        .select("id, payment_status")
+        .single();
+      if (error) throw error;
+      setPurchase(data as Purchase);
+      setPurchaseDialogOpen(false);
+      toast.success("Purchase confirmed. The download is ready.");
+    } catch (err) {
+      captureError(err, { scope: "listingDetail.purchase" });
+      toast.error(err instanceof Error ? err.message : "Could not complete purchase");
+    } finally {
+      setPurchasing(false);
+    }
+  }
+
+  async function download() {
+    if (!purchase) return;
+    setDownloading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "dataset-download-url",
+        { body: { purchase_id: purchase.id } },
+      );
+      if (error) throw error;
+      if (!data?.url) throw new Error("No download URL returned");
+      window.open(data.url, "_blank", "noopener");
+    } catch (err) {
+      captureError(err, { scope: "listingDetail.download" });
+      toast.error(
+        err instanceof Error ? err.message : "Could not generate download link",
+      );
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  function onRequestCtaClick() {
     if (!user) {
       const next = encodeURIComponent(`/marketplace/${listing?.id}`);
       navigate(`/auth?next=${next}`);
@@ -116,12 +198,15 @@ const ListingDetail = () => {
       navigate("/onboarding");
       return;
     }
-    setDialogOpen(true);
+    setRequestDialogOpen(true);
   }
 
   const sampleRows = Array.isArray(listing?.sample_preview)
     ? (listing!.sample_preview as unknown[])
     : [];
+
+  const isApproved = requestStatus === "approved";
+  const hasPaid = purchase?.payment_status === "paid";
 
   return (
     <main className="min-h-screen bg-background">
@@ -222,33 +307,73 @@ const ListingDetail = () => {
                 />
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 space-y-2">
                 {isOwner ? (
                   <Button asChild variant="outline" className="w-full">
                     <Link to={`/dashboard/listings/${listing.id}/edit`}>
                       Edit listing
                     </Link>
                   </Button>
+                ) : hasPaid ? (
+                  <>
+                    <Button
+                      onClick={download}
+                      disabled={downloading}
+                      className="w-full"
+                    >
+                      {downloading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="mr-2 h-4 w-4" />
+                      )}
+                      Download dataset
+                    </Button>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Manage your purchases at{" "}
+                      <Link
+                        to="/dashboard/purchases"
+                        className="text-primary hover:underline"
+                      >
+                        /dashboard/purchases
+                      </Link>
+                      .
+                    </p>
+                  </>
+                ) : isApproved ? (
+                  <>
+                    <Button
+                      onClick={() => setPurchaseDialogOpen(true)}
+                      className="w-full"
+                    >
+                      Confirm purchase
+                    </Button>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Seller approved your request. Mock payment for now.
+                    </p>
+                  </>
                 ) : requestStatus ? (
                   <Button disabled className="w-full capitalize">
                     Request {requestStatus}
                   </Button>
                 ) : (
-                  <Button onClick={onCtaClick} className="w-full">
-                    {!user && <Lock className="mr-2 h-4 w-4" />}
-                    Request access
-                  </Button>
+                  <>
+                    <Button onClick={onRequestCtaClick} className="w-full">
+                      {!user && <Lock className="mr-2 h-4 w-4" />}
+                      Request access
+                    </Button>
+                    <p className="text-center text-xs text-muted-foreground">
+                      No charge until the seller approves.
+                    </p>
+                  </>
                 )}
-                <p className="mt-3 text-center text-xs text-muted-foreground">
-                  No charge until the seller approves.
-                </p>
               </div>
             </div>
           </aside>
         </section>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Request access dialog */}
+      <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Request access</DialogTitle>
@@ -267,16 +392,93 @@ const ListingDetail = () => {
           <DialogFooter>
             <Button
               variant="ghost"
-              onClick={() => setDialogOpen(false)}
-              disabled={submitting}
+              onClick={() => setRequestDialogOpen(false)}
+              disabled={submittingRequest}
             >
               Cancel
             </Button>
-            <Button onClick={submitRequest} disabled={submitting}>
-              {submitting && (
+            <Button onClick={submitRequest} disabled={submittingRequest}>
+              {submittingRequest && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Send request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm purchase dialog */}
+      <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm purchase</DialogTitle>
+            <DialogDescription>
+              Choose how many records you're buying. This is a mock payment —
+              no card will be charged.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="record-count">Records</Label>
+              <Input
+                id="record-count"
+                type="number"
+                min={1}
+                max={listing?.total_records ?? 1}
+                step={1}
+                value={recordCount}
+                onChange={(e) => setRecordCount(Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Up to {formatRecords(listing?.total_records ?? 0)} records
+                available.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Price per record</span>
+                <span className="font-medium text-foreground">
+                  {listing
+                    ? formatPrice(listing.price_per_record, listing.currency)
+                    : "—"}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
+                <span className="text-foreground">Total</span>
+                <span className="text-base font-semibold text-foreground">
+                  {listing
+                    ? formatPrice(
+                        listing.price_per_record *
+                          Math.max(
+                            1,
+                            Math.min(
+                              listing.total_records,
+                              Math.floor(recordCount || 0),
+                            ),
+                          ),
+                        listing.currency,
+                      )
+                    : "—"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setPurchaseDialogOpen(false)}
+              disabled={purchasing}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmPurchase} disabled={purchasing}>
+              {purchasing && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Confirm purchase
             </Button>
           </DialogFooter>
         </DialogContent>
