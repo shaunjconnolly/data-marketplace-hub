@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
@@ -86,6 +87,7 @@ const App = () => (
           </Routes>
         </AuthProvider>
       </BrowserRouter>
+      <CookieConsentBanner />
     </TooltipProvider>
   </QueryClientProvider>
 );

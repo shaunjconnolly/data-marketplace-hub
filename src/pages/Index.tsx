@@ -155,7 +155,15 @@ const Index = () => {
             <span className="font-semibold text-foreground">Uber4Data</span>
             <span>· The marketplace for structured data</span>
           </div>
-          <p>© {new Date().getFullYear()} Uber4Data. All rights reserved.</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center">
+            <p>© {new Date().getFullYear()} Uber4Data. Ireland &amp; Belgium.</p>
+            <span className="hidden md:inline">·</span>
+            <a href="/privacy" className="hover:text-foreground hover:underline underline-offset-2">Privacy policy</a>
+            <span>·</span>
+            <a href="mailto:privacy@uber4data.com" className="hover:text-foreground hover:underline underline-offset-2">privacy@uber4data.com</a>
+            <span>·</span>
+            <span>GDPR compliant</span>
+          </div>
         </div>
       </footer>
     </main>
