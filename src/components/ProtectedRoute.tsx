@@ -7,7 +7,7 @@ type Props = {
   requireOnboarded?: boolean;
 };
 
-const DEV_BYPASS = localStorage.getItem("dev_bypass") === "true";
+const DEV_BYPASS = import.meta.env.DEV && localStorage.getItem("dev_bypass") === "true";
 
 export function ProtectedRoute({ requireOnboarded = true }: Props) {
   const { user, profile, loading } = useAuth();

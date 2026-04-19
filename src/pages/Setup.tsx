@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,15 @@ const Setup = () => {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [blocked, setBlocked] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("user_roles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "admin")
+      .then(({ count }) => setBlocked((count ?? 0) > 0));
+  }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -61,6 +70,31 @@ const Setup = () => {
 
     setDone(true);
     toast.success("Admin account created!");
+  }
+
+  if (blocked === null) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </main>
+    );
+  }
+
+  if (blocked) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 text-center">
+          <ShieldCheck className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h1 className="mt-4 text-xl font-semibold text-foreground">Setup already complete</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            An admin account already exists. Sign in to continue.
+          </p>
+          <Button className="mt-6 w-full" onClick={() => navigate("/auth")}>
+            Go to sign in
+          </Button>
+        </div>
+      </main>
+    );
   }
 
   if (done) {

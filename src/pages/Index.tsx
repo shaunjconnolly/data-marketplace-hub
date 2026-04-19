@@ -158,12 +158,14 @@ const Index = () => {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center">
             <p>© {new Date().getFullYear()} WeSourceData. Ireland &amp; Belgium.</p>
-            <button
-              onClick={() => { localStorage.setItem("dev_bypass", "true"); navigate("/admin"); }}
-              className="text-xs text-muted-foreground/40 hover:text-muted-foreground"
-            >
-              dev
-            </button>
+            {import.meta.env.DEV && (
+              <button
+                onClick={() => { localStorage.setItem("dev_bypass", "true"); navigate("/admin"); }}
+                className="text-xs text-muted-foreground/40 hover:text-muted-foreground"
+              >
+                dev
+              </button>
+            )}
             <span className="hidden md:inline">·</span>
             <a href="/privacy" className="hover:text-foreground hover:underline underline-offset-2">Privacy policy</a>
             <span>·</span>
