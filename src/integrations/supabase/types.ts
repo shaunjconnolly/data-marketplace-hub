@@ -277,6 +277,54 @@ export type Database = {
         }
         Relationships: []
       }
+      purchases: {
+        Row: {
+          access_request_id: string | null
+          buyer_id: string
+          created_at: string
+          currency: string
+          id: string
+          listing_id: string
+          paid_at: string | null
+          payment_provider: string
+          payment_status: string
+          price_per_record: number
+          record_count: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          access_request_id?: string | null
+          buyer_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          listing_id: string
+          paid_at?: string | null
+          payment_provider?: string
+          payment_status?: string
+          price_per_record: number
+          record_count: number
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          access_request_id?: string | null
+          buyer_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          listing_id?: string
+          paid_at?: string | null
+          payment_provider?: string
+          payment_status?: string
+          price_per_record?: number
+          record_count?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
