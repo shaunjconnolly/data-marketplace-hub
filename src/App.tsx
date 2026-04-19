@@ -28,6 +28,7 @@ import AdminWaitlist from "./pages/admin/AdminWaitlist.tsx";
 import AdminListings from "./pages/admin/AdminListings.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminPages from "./pages/admin/AdminPages.tsx";
+import Setup from "./pages/Setup.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/setup" element={<Setup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Public marketplace */}
