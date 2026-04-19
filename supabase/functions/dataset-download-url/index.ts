@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  // 30 download URL requests per IP per minute
+  const { limited } = await checkRateLimit(getClientIp(req), "dataset-download-url", 30);
+  if (limited) return rateLimitedResponse(corsHeaders);
 
   try {
     const authHeader = req.headers.get("Authorization");

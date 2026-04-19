@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Download, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +83,22 @@ const AdminWaitlist = () => {
     });
   }, [rows, search, statusFilter]);
 
+  function exportCsv() {
+    const cols = ["email", "company", "role", "source", "status", "created_at"] as const;
+    const header = cols.join(",");
+    const escape = (v: string | null) =>
+      v == null ? "" : `"${v.replace(/"/g, '""')}"`;
+    const body = filtered
+      .map((r) => cols.map((c) => escape(r[c] ?? null)).join(","))
+      .join("\n");
+    const blob = new Blob([header + "\n" + body], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   async function setStatus(id: string, status: string) {
     setUpdating(id);
     const { error } = await supabase
@@ -115,7 +131,19 @@ const AdminWaitlist = () => {
         </p>
       </header>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!filtered.length}
+          onClick={exportCsv}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV ({filtered.length})
+        </Button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <div className="relative max-w-xs flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

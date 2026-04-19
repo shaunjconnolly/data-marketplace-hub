@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,6 +149,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  // 20 parses per IP per minute — authenticated sellers uploading files
+  const { limited } = await checkRateLimit(getClientIp(req), "parse-dataset", 20);
+  if (limited) return rateLimitedResponse(corsHeaders);
 
   try {
     const authHeader = req.headers.get("Authorization");
