@@ -1,0 +1,13 @@
+{
+  "name": "Data Marketplace Hub",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "postCreateCommand": "npm install && printf 'VITE_SUPABASE_URL=https://dvzgroihdhuozyibexfm.supabase.co\nVITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_u9PqCDdNstLzkOqU1eXKRw_9qXh2vo4\nVITE_SUPABASE_PROJECT_ID=dvzgroihdhuozyibexfm\n' > .env",
+  "postStartCommand": "npm run dev -- --host --port 3000",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "App",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}

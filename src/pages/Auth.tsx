@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +75,7 @@ const Auth = () => {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: window.location.origin + next,
         data: parsed.data.displayName
           ? { display_name: parsed.data.displayName }
           : undefined,
@@ -111,21 +110,6 @@ const Auth = () => {
     setTab("sign-in");
   }
 
-  async function handleGoogle() {
-    setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + next,
-    });
-    if (result.error) {
-      setBusy(false);
-      toast.error(result.error.message ?? "Google sign-in failed");
-      return;
-    }
-    if (result.redirected) return; // browser navigates away
-    // session already set
-    navigate(next, { replace: true });
-  }
-
   if (verificationSent) {
     return (
       <CenteredCard>
@@ -155,7 +139,7 @@ const Auth = () => {
     <CenteredCard>
       <Link to="/" className="flex items-center justify-center gap-2 text-foreground">
         <Database className="h-5 w-5 text-primary" />
-        <span className="font-semibold">Uber4Data</span>
+        <span className="font-semibold">WeSourceData</span>
       </Link>
 
       <Tabs
@@ -169,17 +153,6 @@ const Auth = () => {
         </TabsList>
 
         <TabsContent value="sign-in" className="mt-6 space-y-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogle}
-            disabled={busy}
-          >
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Continue with Google
-          </Button>
-          <Divider>or</Divider>
           <form onSubmit={handleSignIn} className="space-y-3">
             <FieldEmail value={email} onChange={setEmail} />
             <FieldPassword value={password} onChange={setPassword} />
@@ -199,17 +172,6 @@ const Auth = () => {
         </TabsContent>
 
         <TabsContent value="sign-up" className="mt-6 space-y-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogle}
-            disabled={busy}
-          >
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Continue with Google
-          </Button>
-          <Divider>or</Divider>
           <form onSubmit={handleSignUp} className="space-y-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">

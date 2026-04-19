@@ -168,16 +168,33 @@ const ListingDetail = () => {
   }
 
   async function download() {
-    if (!purchase) return;
+    if (!purchase || !listing) return;
     setDownloading(true);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "dataset-download-url",
-        { body: { purchase_id: purchase.id } },
-      );
-      if (error) throw error;
-      if (!data?.url) throw new Error("No download URL returned");
-      window.open(data.url, "_blank", "noopener");
+      if (listing.file_path) {
+        const { data, error } = await supabase.functions.invoke(
+          "dataset-download-url",
+          { body: { purchase_id: purchase.id } },
+        );
+        if (error) throw error;
+        if (!data?.url) throw new Error("No download URL returned");
+        window.open(data.url, "_blank", "noopener");
+      } else {
+        // No file uploaded — download sample preview as JSON
+        const preview = Array.isArray(listing.sample_preview)
+          ? listing.sample_preview
+          : [];
+        const blob = new Blob([JSON.stringify(preview, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${listing.title.replace(/[^a-z0-9]/gi, "_")}_sample.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.info("Downloaded sample preview — seller has not uploaded the full file yet.");
+      }
     } catch (err) {
       captureError(err, { scope: "listingDetail.download" });
       toast.error(
@@ -214,7 +231,7 @@ const ListingDetail = () => {
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2 text-foreground">
             <Database className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold">Uber4Data</span>
+            <span className="text-sm font-semibold">WeSourceData</span>
           </Link>
           <Button asChild variant="ghost" size="sm">
             <Link to="/marketplace">

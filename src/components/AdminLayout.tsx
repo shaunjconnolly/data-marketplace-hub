@@ -1,5 +1,5 @@
 import { Outlet, NavLink as RouterNavLink } from "react-router-dom";
-import { ShieldCheck, Users, Database, Mail, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Users, Database, Mail, ArrowLeft, LayoutList, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -7,7 +7,9 @@ const NAV = [
   { to: "/admin", label: "Overview", icon: ShieldCheck, end: true },
   { to: "/admin/waitlist", label: "Waitlist", icon: Mail },
   { to: "/admin/listings", label: "Listings", icon: Database },
+  { to: "/admin/requests", label: "Requests", icon: Inbox },
   { to: "/admin/users", label: "Users & roles", icon: Users },
+  { to: "/admin/pages", label: "Pages", icon: LayoutList },
 ];
 
 export function AdminLayout() {
@@ -24,7 +26,7 @@ export function AdminLayout() {
                 Admin console
               </p>
               <h1 className="text-base font-semibold text-foreground">
-                Uber4Data
+                WeSourceData
               </h1>
             </div>
           </div>

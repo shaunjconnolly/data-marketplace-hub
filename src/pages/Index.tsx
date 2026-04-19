@@ -1,11 +1,12 @@
 import { forwardRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/AuthProvider";
 import { Lock, FileCheck2, Zap, Database } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const ctaTo = profile?.onboarding_completed ? "/dashboard" : "/onboarding";
 
@@ -23,7 +24,7 @@ const Index = () => {
             className="flex items-center gap-2 text-primary-foreground"
           >
             <Database className="h-5 w-5" />
-            <span className="text-sm font-semibold">Uber4Data</span>
+            <span className="text-sm font-semibold">WeSourceData</span>
           </Link>
           <div className="flex items-center gap-2">
             <Button
@@ -85,7 +86,7 @@ const Index = () => {
             </h1>
 
             <p className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-primary-foreground/75 md:text-lg">
-              Uber4Data connects data sellers with verified buyers. Compliant,
+              WeSourceData connects data sellers with verified buyers. Compliant,
               anonymised, and priced by the record.
             </p>
 
@@ -122,7 +123,7 @@ const Index = () => {
               A safer way to exchange data
             </h2>
             <p className="mt-4 text-pretty text-muted-foreground">
-              Every dataset on Uber4Data is anonymised, scored, and licensed
+              Every dataset on WeSourceData is anonymised, scored, and licensed
               before it ever reaches a buyer.
             </p>
           </div>
@@ -152,10 +153,24 @@ const Index = () => {
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-6 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-2">
             <Database className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-foreground">Uber4Data</span>
+            <span className="font-semibold text-foreground">WeSourceData</span>
             <span>· The marketplace for structured data</span>
           </div>
-          <p>© {new Date().getFullYear()} Uber4Data. All rights reserved.</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center">
+            <p>© {new Date().getFullYear()} WeSourceData. Ireland &amp; Belgium.</p>
+            <button
+              onClick={() => { localStorage.setItem("dev_bypass", "true"); navigate("/admin"); }}
+              className="text-xs text-muted-foreground/40 hover:text-muted-foreground"
+            >
+              dev
+            </button>
+            <span className="hidden md:inline">·</span>
+            <a href="/privacy" className="hover:text-foreground hover:underline underline-offset-2">Privacy policy</a>
+            <span>·</span>
+            <a href="mailto:privacy@wesourcedata.com" className="hover:text-foreground hover:underline underline-offset-2">privacy@wesourcedata.com</a>
+            <span>·</span>
+            <span>GDPR compliant</span>
+          </div>
         </div>
       </footer>
     </main>

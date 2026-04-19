@@ -54,7 +54,7 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <span className="text-sm font-semibold text-sidebar-foreground">
-              Uber4Data
+              WeSourceData
             </span>
           )}
         </div>

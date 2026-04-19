@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
@@ -26,6 +27,9 @@ import AdminOverview from "./pages/admin/AdminOverview.tsx";
 import AdminWaitlist from "./pages/admin/AdminWaitlist.tsx";
 import AdminListings from "./pages/admin/AdminListings.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
+import AdminPages from "./pages/admin/AdminPages.tsx";
+import AdminRequests from "./pages/admin/AdminRequests.tsx";
+import Setup from "./pages/Setup.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -40,6 +44,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/setup" element={<Setup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Public marketplace */}
@@ -77,7 +82,9 @@ const App = () => (
                 <Route path="/admin" element={<AdminOverview />} />
                 <Route path="/admin/waitlist" element={<AdminWaitlist />} />
                 <Route path="/admin/listings" element={<AdminListings />} />
+                <Route path="/admin/requests" element={<AdminRequests />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/pages" element={<AdminPages />} />
               </Route>
             </Route>
 
@@ -86,6 +93,7 @@ const App = () => (
           </Routes>
         </AuthProvider>
       </BrowserRouter>
+      <CookieConsentBanner />
     </TooltipProvider>
   </QueryClientProvider>
 );
