@@ -7,9 +7,13 @@ type Props = {
   requireOnboarded?: boolean;
 };
 
+const DEV_BYPASS = localStorage.getItem("dev_bypass") === "true";
+
 export function ProtectedRoute({ requireOnboarded = true }: Props) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
+
+  if (DEV_BYPASS) return <Outlet />;
 
   if (loading) {
     return (

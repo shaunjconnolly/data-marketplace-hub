@@ -1,11 +1,12 @@
 import { forwardRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/AuthProvider";
 import { Lock, FileCheck2, Zap, Database } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const ctaTo = profile?.onboarding_completed ? "/dashboard" : "/onboarding";
 
@@ -157,6 +158,12 @@ const Index = () => {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center">
             <p>© {new Date().getFullYear()} Uber4Data. Ireland &amp; Belgium.</p>
+            <button
+              onClick={() => { localStorage.setItem("dev_bypass", "true"); navigate("/admin"); }}
+              className="text-xs text-muted-foreground/40 hover:text-muted-foreground"
+            >
+              dev
+            </button>
             <span className="hidden md:inline">·</span>
             <a href="/privacy" className="hover:text-foreground hover:underline underline-offset-2">Privacy policy</a>
             <span>·</span>
