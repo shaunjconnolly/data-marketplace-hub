@@ -22,24 +22,34 @@ const Setup = () => {
     setBusy(true);
 
     // 1. Sign up
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError || !data.user) {
-      toast.error(signUpError?.message ?? "Sign up failed");
+    const { error: signUpError } = await supabase.auth.signUp({ email, password });
+    if (signUpError) {
+      toast.error(signUpError.message);
       setBusy(false);
       return;
     }
 
-    // 2. Create profile
+    // 2. Sign in immediately to get a confirmed session and real user ID
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError || !signInData.user) {
+      toast.error("Account created — check your email to confirm it, then sign in at /auth and contact support to grant admin access.");
+      setBusy(false);
+      return;
+    }
+
+    const userId = signInData.user.id;
+
+    // 3. Create profile
     await supabase.from("profiles").upsert({
-      id: data.user.id,
+      id: userId,
       display_name: "Admin",
       onboarding_completed: true,
       primary_role: "both",
     });
 
-    // 3. Grant admin role via security-definer function (bypasses RLS)
+    // 4. Grant admin role via security-definer function (bypasses RLS)
     const { error: roleError } = await supabase.rpc("setup_first_admin", {
-      target_user_id: data.user.id,
+      target_user_id: userId,
     });
 
     setBusy(false);
