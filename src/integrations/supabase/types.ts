@@ -118,6 +118,10 @@ export type Database = {
           created_at: string
           currency: string
           description: string
+          file_mime: string | null
+          file_original_name: string | null
+          file_path: string | null
+          file_size_bytes: number | null
           id: string
           price_per_record: number
           published_at: string | null
@@ -133,6 +137,10 @@ export type Database = {
           created_at?: string
           currency?: string
           description: string
+          file_mime?: string | null
+          file_original_name?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
           id?: string
           price_per_record: number
           published_at?: string | null
@@ -148,6 +156,10 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string
+          file_mime?: string | null
+          file_original_name?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
           id?: string
           price_per_record?: number
           published_at?: string | null
