@@ -19,6 +19,7 @@ import ListingEdit from "./pages/ListingEdit.tsx";
 import Marketplace from "./pages/Marketplace.tsx";
 import ListingDetail from "./pages/ListingDetail.tsx";
 import Requests from "./pages/Requests.tsx";
+import Purchases from "./pages/Purchases.tsx";
 import Notifications from "./pages/Notifications.tsx";
 import Settings from "./pages/Settings.tsx";
 import AdminOverview from "./pages/admin/AdminOverview.tsx";
@@ -61,6 +62,7 @@ const App = () => (
                   element={<ListingEdit />}
                 />
                 <Route path="/dashboard/requests" element={<Requests />} />
+                <Route path="/dashboard/purchases" element={<Purchases />} />
                 <Route
                   path="/dashboard/notifications"
                   element={<Notifications />}
