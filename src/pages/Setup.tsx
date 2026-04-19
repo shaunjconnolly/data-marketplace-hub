@@ -37,11 +37,8 @@ const Setup = () => {
       primary_role: "both",
     });
 
-    // 3. Grant admin role
-    const { error: roleError } = await supabase.from("user_roles").insert({
-      user_id: data.user.id,
-      role: "admin",
-    });
+    // 3. Grant admin role via security-definer function (bypasses RLS)
+    const { error: roleError } = await supabase.rpc("setup_first_admin");
 
     setBusy(false);
 
