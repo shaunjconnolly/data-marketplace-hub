@@ -1,22 +1,13 @@
 {
   "name": "Data Marketplace Hub",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
-  "postCreateCommand": "npm install",
-  "postStartCommand": "npm run dev -- --host",
-  "forwardPorts": [8080, 8081],
+  "postCreateCommand": "npm install && printf 'VITE_SUPABASE_URL=https://ykurxoghlfvnussealkx.supabase.co\nVITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrdXJ4b2dobGZ2bnVzc2VhbGt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzYxMzEsImV4cCI6MjA5MjExMjEzMX0.T1XbGxVZliYaDtIqU_gR4ve0YX_u_N7xAnqOxChh7kE\nVITE_SUPABASE_PROJECT_ID=ykurxoghlfvnussealkx\n' > .env",
+  "postStartCommand": "npm run dev -- --host --port 3000",
+  "forwardPorts": [3000],
   "portsAttributes": {
-    "8080": {
+    "3000": {
       "label": "App",
       "onAutoForward": "openBrowser"
-    },
-    "8081": {
-      "label": "App (fallback)",
-      "onAutoForward": "openBrowser"
     }
-  },
-  "containerEnv": {
-    "VITE_SUPABASE_URL": "https://ykurxoghlfvnussealkx.supabase.co",
-    "VITE_SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrdXJ4b2dobGZ2bnVzc2VhbGt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzYxMzEsImV4cCI6MjA5MjExMjEzMX0.T1XbGxVZliYaDtIqU_gR4ve0YX_u_N7xAnqOxChh7kE",
-    "VITE_SUPABASE_PROJECT_ID": "ykurxoghlfvnussealkx"
   }
 }
