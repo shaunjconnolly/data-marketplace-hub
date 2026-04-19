@@ -38,7 +38,9 @@ const Setup = () => {
     });
 
     // 3. Grant admin role via security-definer function (bypasses RLS)
-    const { error: roleError } = await supabase.rpc("setup_first_admin");
+    const { error: roleError } = await supabase.rpc("setup_first_admin", {
+      target_user_id: data.user.id,
+    });
 
     setBusy(false);
 
