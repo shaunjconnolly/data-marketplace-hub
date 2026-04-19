@@ -97,7 +97,7 @@ const Setup = () => {
             <Input
               type="email"
               required
-              placeholder="admin@uber4data.com"
+              placeholder="admin@wesourcedata.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />

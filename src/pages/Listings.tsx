@@ -92,7 +92,7 @@ const Listings = () => {
             My listings
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Create and manage the datasets you sell on Uber4Data.
+            Create and manage the datasets you sell on WeSourceData.
           </p>
         </div>
         <Button asChild>

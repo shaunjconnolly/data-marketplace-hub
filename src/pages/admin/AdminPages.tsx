@@ -193,7 +193,7 @@ const AdminPages = () => {
         Page repository
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Every route in the Uber4Data application — {PAGES.length} pages across {GROUPS.length} access levels.
+        Every route in the WeSourceData application — {PAGES.length} pages across {GROUPS.length} access levels.
       </p>
 
       <div className="mt-8 space-y-10">

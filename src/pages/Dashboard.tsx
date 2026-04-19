@@ -175,7 +175,7 @@ const Dashboard = () => {
           <ActionCard
             icon={<Sparkles className="h-5 w-5" />}
             title="Finish your setup"
-            body="Tell us how you'll use Uber4Data so we can tailor the experience."
+            body="Tell us how you'll use WeSourceData so we can tailor the experience."
             ctaLabel="Complete onboarding"
             ctaTo="/onboarding"
           />

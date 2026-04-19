@@ -142,7 +142,7 @@ const Settings = () => {
           <h2 className="text-base font-semibold text-foreground">Your data rights</h2>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Uber4Data is operated from Ireland and Belgium and is subject to GDPR.
+          WeSourceData is operated from Ireland and Belgium and is subject to GDPR.
           You have the right to access, export, or erase your personal data at any time.
         </p>
 
@@ -213,8 +213,8 @@ const Settings = () => {
 
         <p className="mt-4 text-xs text-muted-foreground">
           For other requests (rectification, restriction of processing) email{" "}
-          <a href="mailto:privacy@uber4data.com" className="underline underline-offset-2">
-            privacy@uber4data.com
+          <a href="mailto:privacy@wesourcedata.com" className="underline underline-offset-2">
+            privacy@wesourcedata.com
           </a>
         </p>
       </div>

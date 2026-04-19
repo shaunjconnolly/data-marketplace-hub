@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-const STORAGE_KEY = "uber4data_consent_v1";
+const STORAGE_KEY = "wesourcedata_consent_v1";
 
 type ConsentState = {
   analytics: boolean;
@@ -66,7 +66,7 @@ export function CookieConsentBanner() {
             We use cookies to keep the platform working.
           </p>
           <p className="text-xs text-muted-foreground">
-            Uber4Data is operated from Ireland and Belgium and processes personal
+            WeSourceData is operated from Ireland and Belgium and processes personal
             data in accordance with GDPR. Essential cookies are always active.
             You can optionally allow analytics and marketing cookies.{" "}
             <a

@@ -15,7 +15,7 @@ const schema = z.object({
   displayName: z.string().min(1, "Tell us your name").max(100),
   company: z.string().max(200).optional(),
   primaryRole: z.enum(["buyer", "seller", "both"], {
-    message: "Choose how you'll use Uber4Data",
+    message: "Choose how you'll use WeSourceData",
   }),
 });
 
@@ -142,7 +142,7 @@ const Onboarding = () => {
 
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">
-              How will you use Uber4Data?
+              How will you use WeSourceData?
             </label>
             <div className="grid gap-3 md:grid-cols-3">
               {ROLE_OPTIONS.map((opt) => {

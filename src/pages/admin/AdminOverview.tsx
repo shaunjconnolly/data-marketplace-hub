@@ -66,7 +66,7 @@ const AdminOverview = () => {
         Overview
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Live snapshot of the Uber4Data platform.
+        Live snapshot of the WeSourceData platform.
       </p>
 
       <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -113,7 +113,7 @@ const AdminOverview = () => {
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               You are signed in as an admin. Actions taken here affect every
-              user on Uber4Data — be careful, especially when archiving
+              user on WeSourceData — be careful, especially when archiving
               listings or revoking roles.
             </p>
           </div>

@@ -139,7 +139,7 @@ const Auth = () => {
     <CenteredCard>
       <Link to="/" className="flex items-center justify-center gap-2 text-foreground">
         <Database className="h-5 w-5 text-primary" />
-        <span className="font-semibold">Uber4Data</span>
+        <span className="font-semibold">WeSourceData</span>
       </Link>
 
       <Tabs
