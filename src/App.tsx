@@ -27,6 +27,7 @@ import AdminOverview from "./pages/admin/AdminOverview.tsx";
 import AdminWaitlist from "./pages/admin/AdminWaitlist.tsx";
 import AdminListings from "./pages/admin/AdminListings.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
+import AdminPages from "./pages/admin/AdminPages.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ const App = () => (
                 <Route path="/admin/waitlist" element={<AdminWaitlist />} />
                 <Route path="/admin/listings" element={<AdminListings />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/pages" element={<AdminPages />} />
               </Route>
             </Route>
 
