@@ -1,6 +1,7 @@
 -- ============================================================
 -- Uber4Data — full schema setup
 -- Paste into Supabase SQL Editor and Run
+-- Safe to re-run: uses IF NOT EXISTS + DROP … IF EXISTS guards
 -- ============================================================
 
 -- WAITLIST
@@ -14,6 +15,7 @@ create table if not exists public.waitlist (
   status text not null default 'waiting' check (status in ('waiting', 'invited', 'converted'))
 );
 alter table public.waitlist enable row level security;
+drop policy if exists "Anyone can join the waitlist" on public.waitlist;
 create policy "Anyone can join the waitlist"
   on public.waitlist for insert to anon, authenticated with check (true);
 
@@ -45,8 +47,10 @@ create table if not exists public.notifications (
   read_at timestamptz
 );
 alter table public.notifications enable row level security;
+drop policy if exists "Users can view their own notifications" on public.notifications;
 create policy "Users can view their own notifications"
   on public.notifications for select to authenticated using (auth.uid() = user_id);
+drop policy if exists "Users can mark their own notifications as read" on public.notifications;
 create policy "Users can mark their own notifications as read"
   on public.notifications for update to authenticated
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -159,24 +163,31 @@ create trigger update_profiles_updated_at
   for each row execute function public.update_updated_at_column();
 
 -- PROFILES POLICIES
+drop policy if exists "Users can view their own profile" on public.profiles;
 create policy "Users can view their own profile"
   on public.profiles for select to authenticated using (auth.uid() = id);
+drop policy if exists "Users can update their own profile" on public.profiles;
 create policy "Users can update their own profile"
   on public.profiles for update to authenticated
   using (auth.uid() = id) with check (auth.uid() = id);
+drop policy if exists "Admins can view all profiles" on public.profiles;
 create policy "Admins can view all profiles"
   on public.profiles for select to authenticated
   using (public.has_role(auth.uid(), 'admin'));
 
 -- USER ROLES POLICIES
+drop policy if exists "Users can view their own roles" on public.user_roles;
 create policy "Users can view their own roles"
   on public.user_roles for select to authenticated using (auth.uid() = user_id);
+drop policy if exists "Admins can view all roles" on public.user_roles;
 create policy "Admins can view all roles"
   on public.user_roles for select to authenticated
   using (public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can grant roles" on public.user_roles;
 create policy "Admins can grant roles"
   on public.user_roles for insert to authenticated
   with check (public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can revoke roles" on public.user_roles;
 create policy "Admins can revoke roles"
   on public.user_roles for delete to authenticated
   using (public.has_role(auth.uid(), 'admin'));
@@ -205,19 +216,26 @@ alter table public.listings enable row level security;
 create index if not exists idx_listings_seller on public.listings (seller_id);
 create index if not exists idx_listings_status on public.listings (status);
 create index if not exists idx_listings_category on public.listings (category);
+drop policy if exists "Anyone can view published listings" on public.listings;
 create policy "Anyone can view published listings"
   on public.listings for select to anon, authenticated using (status = 'published');
+drop policy if exists "Sellers can view their own listings" on public.listings;
 create policy "Sellers can view their own listings"
   on public.listings for select to authenticated using (auth.uid() = seller_id);
+drop policy if exists "Admins can view all listings" on public.listings;
 create policy "Admins can view all listings"
   on public.listings for select to authenticated using (has_role(auth.uid(), 'admin'));
+drop policy if exists "Sellers can create their own listings" on public.listings;
 create policy "Sellers can create their own listings"
   on public.listings for insert to authenticated with check (auth.uid() = seller_id);
+drop policy if exists "Sellers can update their own listings" on public.listings;
 create policy "Sellers can update their own listings"
   on public.listings for update to authenticated
   using (auth.uid() = seller_id) with check (auth.uid() = seller_id);
+drop policy if exists "Sellers can delete their own listings" on public.listings;
 create policy "Sellers can delete their own listings"
   on public.listings for delete to authenticated using (auth.uid() = seller_id);
+drop policy if exists "Admins can update any listing" on public.listings;
 create policy "Admins can update any listing"
   on public.listings for update to authenticated
   using (has_role(auth.uid(), 'admin')) with check (has_role(auth.uid(), 'admin'));
@@ -240,8 +258,10 @@ create table if not exists public.access_requests (
 alter table public.access_requests enable row level security;
 create index if not exists idx_access_requests_listing on public.access_requests (listing_id);
 create index if not exists idx_access_requests_buyer on public.access_requests (buyer_id);
+drop policy if exists "Buyers can view their own requests" on public.access_requests;
 create policy "Buyers can view their own requests"
   on public.access_requests for select to authenticated using (auth.uid() = buyer_id);
+drop policy if exists "Sellers can view requests on their listings" on public.access_requests;
 create policy "Sellers can view requests on their listings"
   on public.access_requests for select to authenticated
   using (exists (
@@ -249,9 +269,11 @@ create policy "Sellers can view requests on their listings"
     where listings.id = access_requests.listing_id
       and listings.seller_id = auth.uid()
   ));
+drop policy if exists "Admins can view all requests" on public.access_requests;
 create policy "Admins can view all requests"
   on public.access_requests for select to authenticated
   using (has_role(auth.uid(), 'admin'));
+drop policy if exists "Buyers can create requests on published listings" on public.access_requests;
 create policy "Buyers can create requests on published listings"
   on public.access_requests for insert to authenticated
   with check (
@@ -262,6 +284,7 @@ create policy "Buyers can create requests on published listings"
         and listings.status = 'published'
     )
   );
+drop policy if exists "Sellers can update requests on their listings" on public.access_requests;
 create policy "Sellers can update requests on their listings"
   on public.access_requests for update to authenticated
   using (exists (
@@ -302,27 +325,25 @@ end;
 $$;
 
 -- TRIGGER: notify buyer on request status change
+-- Uses inline subqueries instead of declared variables to avoid parser ambiguity
 create or replace function public.notify_buyer_on_request_status_change()
 returns trigger
 language plpgsql security definer set search_path = public
 as $$
-declare
-  v_listing_title text;
 begin
   if NEW.status = OLD.status then
     return NEW;
   end if;
-
-  select title into v_listing_title
-  from public.listings
-  where id = NEW.listing_id;
 
   if NEW.status = 'approved' then
     perform public.create_notification(
       NEW.buyer_id,
       'access_approved',
       'Access approved',
-      'Your request for "' || coalesce(v_listing_title, 'a dataset') || '" was approved.',
+      'Your request for "' || coalesce(
+        (select title from public.listings where id = NEW.listing_id),
+        'a dataset'
+      ) || '" was approved.',
       '/marketplace/' || NEW.listing_id::text,
       jsonb_build_object('listing_id', NEW.listing_id, 'request_id', NEW.id)
     );
@@ -331,7 +352,10 @@ begin
       NEW.buyer_id,
       'access_declined',
       'Access declined',
-      'Your request for "' || coalesce(v_listing_title, 'a dataset') || '" was declined.',
+      'Your request for "' || coalesce(
+        (select title from public.listings where id = NEW.listing_id),
+        'a dataset'
+      ) || '" was declined.',
       '/marketplace/' || NEW.listing_id::text,
       jsonb_build_object('listing_id', NEW.listing_id, 'request_id', NEW.id)
     );
@@ -347,9 +371,11 @@ create trigger access_requests_notify_buyer
   for each row execute function public.notify_buyer_on_request_status_change();
 
 -- WAITLIST ADMIN POLICIES
+drop policy if exists "Admins can view all waitlist entries" on public.waitlist;
 create policy "Admins can view all waitlist entries"
   on public.waitlist for select to authenticated
   using (has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can update waitlist entries" on public.waitlist;
 create policy "Admins can update waitlist entries"
   on public.waitlist for update to authenticated
   using (has_role(auth.uid(), 'admin')) with check (has_role(auth.uid(), 'admin'));
@@ -373,17 +399,21 @@ create table if not exists public.purchases (
 alter table public.purchases enable row level security;
 create index if not exists idx_purchases_buyer on public.purchases (buyer_id);
 create index if not exists idx_purchases_listing on public.purchases (listing_id);
+drop policy if exists "Buyers can view their own purchases" on public.purchases;
 create policy "Buyers can view their own purchases"
   on public.purchases for select to authenticated using (auth.uid() = buyer_id);
+drop policy if exists "Sellers can view purchases on their listings" on public.purchases;
 create policy "Sellers can view purchases on their listings"
   on public.purchases for select to authenticated
   using (exists (
     select 1 from public.listings l
     where l.id = purchases.listing_id and l.seller_id = auth.uid()
   ));
+drop policy if exists "Admins can view all purchases" on public.purchases;
 create policy "Admins can view all purchases"
   on public.purchases for select to authenticated
   using (public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Buyers can create their own purchases" on public.purchases;
 create policy "Buyers can create their own purchases"
   on public.purchases for insert to authenticated
   with check (
@@ -399,29 +429,25 @@ create trigger update_purchases_updated_at
   for each row execute function public.update_updated_at_column();
 
 -- TRIGGER: notify seller on purchase
+-- Uses inline subqueries instead of declared variables to avoid parser ambiguity
 create or replace function public.notify_seller_on_purchase()
 returns trigger
 language plpgsql security definer set search_path = public
 as $$
-declare
-  v_seller_id uuid;
-  v_title text;
 begin
-  select seller_id, title into v_seller_id, v_title
-  from public.listings
-  where id = NEW.listing_id;
-
-  if v_seller_id is not null then
+  if exists (select 1 from public.listings where id = NEW.listing_id) then
     perform public.create_notification(
-      v_seller_id,
+      (select seller_id from public.listings where id = NEW.listing_id),
       'purchase_completed',
       'New purchase',
-      'A buyer purchased "' || coalesce(v_title, 'your dataset') || '".',
+      'A buyer purchased "' || coalesce(
+        (select title from public.listings where id = NEW.listing_id),
+        'your dataset'
+      ) || '".',
       '/dashboard/listings',
       jsonb_build_object('listing_id', NEW.listing_id, 'purchase_id', NEW.id)
     );
   end if;
-
   return NEW;
 end;
 $$;
@@ -436,18 +462,23 @@ insert into storage.buckets (id, name, public)
 values ('dataset-files', 'dataset-files', false)
 on conflict (id) do nothing;
 
+drop policy if exists "Sellers can upload their own dataset files" on storage.objects;
 create policy "Sellers can upload their own dataset files"
   on storage.objects for insert to authenticated
   with check (bucket_id = 'dataset-files' and auth.uid()::text = (storage.foldername(name))[1]);
+drop policy if exists "Sellers can read their own dataset files" on storage.objects;
 create policy "Sellers can read their own dataset files"
   on storage.objects for select to authenticated
   using (bucket_id = 'dataset-files' and auth.uid()::text = (storage.foldername(name))[1]);
+drop policy if exists "Sellers can update their own dataset files" on storage.objects;
 create policy "Sellers can update their own dataset files"
   on storage.objects for update to authenticated
   using (bucket_id = 'dataset-files' and auth.uid()::text = (storage.foldername(name))[1]);
+drop policy if exists "Sellers can delete their own dataset files" on storage.objects;
 create policy "Sellers can delete their own dataset files"
   on storage.objects for delete to authenticated
   using (bucket_id = 'dataset-files' and auth.uid()::text = (storage.foldername(name))[1]);
+drop policy if exists "Admins can read all dataset files" on storage.objects;
 create policy "Admins can read all dataset files"
   on storage.objects for select to authenticated
   using (bucket_id = 'dataset-files' and public.has_role(auth.uid(), 'admin'));
@@ -464,8 +495,10 @@ create table if not exists public.consent_records (
   created_at timestamptz default now() not null
 );
 alter table public.consent_records enable row level security;
+drop policy if exists "Users can view own consent records" on public.consent_records;
 create policy "Users can view own consent records"
   on public.consent_records for select using (auth.uid() = user_id);
+drop policy if exists "Anyone can insert consent records" on public.consent_records;
 create policy "Anyone can insert consent records"
   on public.consent_records for insert with check (true);
 create index if not exists idx_consent_records_user_id on public.consent_records (user_id);
@@ -483,10 +516,13 @@ create table if not exists public.data_subject_requests (
   updated_at timestamptz default now() not null
 );
 alter table public.data_subject_requests enable row level security;
+drop policy if exists "Users can view own data subject requests" on public.data_subject_requests;
 create policy "Users can view own data subject requests"
   on public.data_subject_requests for select using (auth.uid() = user_id);
+drop policy if exists "Authenticated users can create data subject requests" on public.data_subject_requests;
 create policy "Authenticated users can create data subject requests"
   on public.data_subject_requests for insert with check (auth.uid() = user_id);
+drop policy if exists "Admins can manage all data subject requests" on public.data_subject_requests;
 create policy "Admins can manage all data subject requests"
   on public.data_subject_requests for all
   using (exists (
