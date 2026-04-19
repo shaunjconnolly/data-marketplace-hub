@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Loader2, Download, Trash2, ShieldCheck } from "lucide-react";
+import { Loader2, Download, Trash2, ShieldCheck, Smartphone } from "lucide-react";
 
 type Role = "buyer" | "seller" | "both";
 
@@ -134,6 +134,31 @@ const Settings = () => {
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save changes"}
         </Button>
       </form>
+
+      {/* Two-factor authentication */}
+      <div className="rounded-2xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <div className="flex items-center gap-2">
+          <Smartphone className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold text-foreground">Two-factor authentication</h2>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Add a second layer of security to your account using an authenticator app.
+        </p>
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-muted/30 p-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">Authenticator app (TOTP)</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Use Google Authenticator, Authy, or any TOTP-compatible app.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" disabled onClick={() => toast.info("2FA setup coming soon")}>
+            Set up
+          </Button>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          2FA enforcement is coming in a future update. All sellers will be required to enable it.
+        </p>
+      </div>
 
       {/* GDPR / Privacy rights */}
       <div className="rounded-2xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-soft)" }}>

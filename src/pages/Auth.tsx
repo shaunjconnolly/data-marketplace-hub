@@ -44,6 +44,23 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+
+  async function handleMagicLink() {
+    const parsed = resetSchema.safeParse({ email });
+    if (!parsed.success) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: parsed.data.email,
+      options: { emailRedirectTo: window.location.origin + next },
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setMagicLinkSent(true);
+  }
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +127,21 @@ const Auth = () => {
     setTab("sign-in");
   }
 
+  if (magicLinkSent) {
+    return (
+      <CenteredCard>
+        <Mail className="mx-auto h-12 w-12 text-primary" />
+        <h1 className="mt-4 text-2xl font-semibold text-foreground">Magic link sent</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We sent a sign-in link to <strong>{email}</strong>. Click it to sign in — no password needed.
+        </p>
+        <Button variant="outline" className="mt-6 w-full" onClick={() => setMagicLinkSent(false)}>
+          Back to sign in
+        </Button>
+      </CenteredCard>
+    );
+  }
+
   if (verificationSent) {
     return (
       <CenteredCard>
@@ -169,6 +201,20 @@ const Auth = () => {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
             </Button>
           </form>
+          <Divider>or</Divider>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={busy}
+            onClick={handleMagicLink}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            Send magic link
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Enter your email above, then click to receive a one-click sign-in link.
+          </p>
         </TabsContent>
 
         <TabsContent value="sign-up" className="mt-6 space-y-4">

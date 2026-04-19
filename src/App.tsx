@@ -29,6 +29,7 @@ import AdminListings from "./pages/admin/AdminListings.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminPages from "./pages/admin/AdminPages.tsx";
 import AdminRequests from "./pages/admin/AdminRequests.tsx";
+import AdminMonitoring from "./pages/admin/AdminMonitoring.tsx";
 import Setup from "./pages/Setup.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/admin/listings" element={<AdminListings />} />
                 <Route path="/admin/requests" element={<AdminRequests />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/monitoring" element={<AdminMonitoring />} />
                 <Route path="/admin/pages" element={<AdminPages />} />
               </Route>
             </Route>
