@@ -75,7 +75,7 @@ const Auth = () => {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: window.location.origin + next,
         data: parsed.data.displayName
           ? { display_name: parsed.data.displayName }
           : undefined,

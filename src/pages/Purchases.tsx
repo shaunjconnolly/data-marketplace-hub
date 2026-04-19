@@ -23,6 +23,7 @@ type Row = {
     category: string;
     file_path: string | null;
     file_original_name: string | null;
+    sample_preview: unknown;
   } | null;
 };
 
@@ -38,7 +39,7 @@ const Purchases = () => {
       const { data, error } = await supabase
         .from("purchases")
         .select(
-          "id, created_at, paid_at, payment_status, total_amount, record_count, price_per_record, currency, listing:listings!inner(id, title, category, file_path, file_original_name)",
+          "id, created_at, paid_at, payment_status, total_amount, record_count, price_per_record, currency, listing:listings!inner(id, title, category, file_path, file_original_name, sample_preview)",
         )
         .eq("buyer_id", user.id)
         .order("created_at", { ascending: false });
@@ -52,18 +53,35 @@ const Purchases = () => {
     load();
   }, [user]);
 
-  async function download(purchaseId: string) {
-    setDownloadingId(purchaseId);
+  async function download(row: Row) {
+    setDownloadingId(row.id);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "dataset-download-url",
-        { body: { purchase_id: purchaseId } },
-      );
-      if (error) throw error;
-      if (!data?.url) throw new Error("No download URL returned");
-      window.open(data.url, "_blank", "noopener");
+      if (row.listing?.file_path) {
+        const { data, error } = await supabase.functions.invoke(
+          "dataset-download-url",
+          { body: { purchase_id: row.id } },
+        );
+        if (error) throw error;
+        if (!data?.url) throw new Error("No download URL returned");
+        window.open(data.url, "_blank", "noopener");
+      } else {
+        // No file — download sample_preview as JSON
+        const preview = Array.isArray(row.listing?.sample_preview)
+          ? row.listing!.sample_preview
+          : [];
+        const blob = new Blob([JSON.stringify(preview, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${(row.listing?.title ?? "dataset").replace(/[^a-z0-9]/gi, "_")}_sample.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.info("Downloaded sample preview — seller has not uploaded the full file yet.");
+      }
     } catch (err) {
-      captureError(err, { scope: "purchases.download", purchaseId });
+      captureError(err, { scope: "purchases.download", purchaseId: row.id });
       toast.error(
         err instanceof Error ? err.message : "Could not generate download link",
       );
@@ -136,9 +154,8 @@ const Purchases = () => {
                     </span>
                     <Button
                       size="sm"
-                      onClick={() => download(r.id)}
+                      onClick={() => download(r)}
                       disabled={
-                        !hasFile ||
                         r.payment_status !== "paid" ||
                         downloadingId === r.id
                       }
@@ -148,7 +165,7 @@ const Purchases = () => {
                       ) : (
                         <Download className="mr-2 h-4 w-4" />
                       )}
-                      {hasFile ? "Download" : "No file"}
+                      {hasFile ? "Download" : "Download preview"}
                     </Button>
                   </div>
                 </li>
