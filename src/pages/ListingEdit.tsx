@@ -17,6 +17,10 @@ type Loaded = {
   total_records: number;
   sample_preview: unknown;
   status: ListingStatus;
+  file_path: string | null;
+  file_size_bytes: number | null;
+  file_mime: string | null;
+  file_original_name: string | null;
 };
 
 const ListingEdit = () => {
@@ -32,7 +36,7 @@ const ListingEdit = () => {
       const { data, error } = await supabase
         .from("listings")
         .select(
-          "id, title, description, category, price_per_record, total_records, sample_preview, status, seller_id",
+          "id, title, description, category, price_per_record, total_records, sample_preview, status, seller_id, file_path, file_size_bytes, file_mime, file_original_name",
         )
         .eq("id", id)
         .maybeSingle();

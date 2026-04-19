@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, FileCheck2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -28,13 +29,27 @@ type Props = {
     id?: string;
     status?: ListingStatus;
     sample_preview?: unknown;
+    file_path?: string | null;
+    file_size_bytes?: number | null;
+    file_mime?: string | null;
+    file_original_name?: string | null;
   };
 };
+
+const ACCEPTED = ".csv,.json,.ndjson,.jsonl,application/json,text/csv";
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50 MB
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+}
 
 export function ListingForm({ initial }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isEditing = !!initial?.id;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [values, setValues] = useState<ListingFormValues>({
     title: initial?.title ?? "",
@@ -47,10 +62,24 @@ export function ListingForm({ initial }: Props) {
       : "",
   });
 
+  const [file, setFile] = useState<{
+    path: string | null;
+    size: number | null;
+    mime: string | null;
+    name: string | null;
+  }>({
+    path: initial?.file_path ?? null,
+    size: initial?.file_size_bytes ?? null,
+    mime: initial?.file_mime ?? null,
+    name: initial?.file_original_name ?? null,
+  });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<null | "draft" | "published">(
     null,
   );
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   function update<K extends keyof ListingFormValues>(
     key: K,
@@ -58,6 +87,105 @@ export function ListingForm({ initial }: Props) {
   ) {
     setValues((v) => ({ ...v, [key]: value }));
     setErrors((e) => ({ ...e, [key]: "" }));
+  }
+
+  async function handleFile(selected: File) {
+    if (!user) return;
+    if (selected.size > MAX_UPLOAD_BYTES) {
+      toast.error(
+        `File is too large (max ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB)`,
+      );
+      return;
+    }
+
+    const lowerName = selected.name.toLowerCase();
+    const looksRight =
+      lowerName.endsWith(".csv") ||
+      lowerName.endsWith(".json") ||
+      lowerName.endsWith(".ndjson") ||
+      lowerName.endsWith(".jsonl");
+    if (!looksRight) {
+      toast.error("Please upload a .csv, .json, .ndjson, or .jsonl file");
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(15);
+    try {
+      // Path: {user_id}/{timestamp}-{filename}
+      const safeName = selected.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${user.id}/${Date.now()}-${safeName}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("dataset-files")
+        .upload(path, selected, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: selected.type || undefined,
+        });
+      if (upErr) throw upErr;
+      setUploadProgress(60);
+
+      // Call parse function
+      const { data: parseData, error: parseErr } =
+        await supabase.functions.invoke("parse-dataset", {
+          body: {
+            file_path: path,
+            file_mime: selected.type,
+            file_original_name: selected.name,
+          },
+        });
+      if (parseErr) throw parseErr;
+      setUploadProgress(100);
+
+      setFile({
+        path,
+        size: selected.size,
+        mime: selected.type,
+        name: selected.name,
+      });
+
+      // Auto-fill sample preview + total records
+      if (parseData?.sample) {
+        setValues((v) => ({
+          ...v,
+          sample_preview_text: JSON.stringify(parseData.sample, null, 2),
+          total_records: parseData.total_records ?? v.total_records,
+        }));
+        setErrors((e) => ({
+          ...e,
+          sample_preview_text: "",
+          total_records: "",
+        }));
+      }
+
+      toast.success(
+        `Parsed ${parseData?.total_records ?? 0} records from ${selected.name}`,
+      );
+    } catch (err) {
+      captureError(err, { scope: "listing.upload" });
+      toast.error(
+        err instanceof Error ? err.message : "Upload or parsing failed",
+      );
+    } finally {
+      setUploading(false);
+      setTimeout(() => setUploadProgress(0), 600);
+    }
+  }
+
+  async function removeFile() {
+    if (!file.path) {
+      setFile({ path: null, size: null, mime: null, name: null });
+      return;
+    }
+    try {
+      await supabase.storage.from("dataset-files").remove([file.path]);
+    } catch (err) {
+      // non-fatal — clear locally anyway
+      captureError(err, { scope: "listing.removeFile" });
+    }
+    setFile({ path: null, size: null, mime: null, name: null });
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function submit(targetStatus: "draft" | "published") {
@@ -88,6 +216,10 @@ export function ListingForm({ initial }: Props) {
         published_at:
           targetStatus === "published" ? new Date().toISOString() : null,
         seller_id: user.id,
+        file_path: file.path,
+        file_size_bytes: file.size,
+        file_mime: file.mime,
+        file_original_name: file.name,
       };
 
       if (isEditing && initial?.id) {
@@ -137,6 +269,70 @@ export function ListingForm({ initial }: Props) {
         {errors.title && (
           <p className="text-sm text-destructive">{errors.title}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dataset-file">Dataset file</Label>
+        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
+          {file.path ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <FileCheck2 className="h-5 w-5 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {file.name ?? file.path}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {file.size != null ? formatBytes(file.size) : "—"}
+                    {file.mime ? ` · ${file.mime}` : ""}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={removeFile}
+                disabled={uploading || submitting !== null}
+              >
+                <X className="mr-1 h-4 w-4" />
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Upload className="h-4 w-4" />
+                Upload a CSV, JSON, or NDJSON file. We'll auto-fill the sample
+                and record count.
+              </div>
+              <Input
+                id="dataset-file"
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED}
+                disabled={uploading}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFile(f);
+                }}
+                className="cursor-pointer"
+              />
+              {uploading && (
+                <div className="w-full space-y-1">
+                  <Progress value={uploadProgress} className="h-1.5" />
+                  <p className="text-xs text-muted-foreground">
+                    Uploading and parsing…
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Stored privately. Only you and the buyers you approve can access it.
+          Max 50&nbsp;MB.
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -218,7 +414,7 @@ export function ListingForm({ initial }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="sample">Sample preview (optional)</Label>
+        <Label htmlFor="sample">Sample preview</Label>
         <Textarea
           id="sample"
           rows={6}
@@ -228,8 +424,7 @@ export function ListingForm({ initial }: Props) {
           className="font-mono text-xs"
         />
         <p className="text-xs text-muted-foreground">
-          Buyers see this on the listing page. JSON array or one JSON object per
-          line.
+          Auto-filled when you upload a file. You can edit it freely.
         </p>
         {errors.sample_preview_text && (
           <p className="text-sm text-destructive">
@@ -239,7 +434,10 @@ export function ListingForm({ initial }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
-        <Button type="submit" disabled={submitting !== null}>
+        <Button
+          type="submit"
+          disabled={submitting !== null || uploading}
+        >
           {submitting === "published" && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
@@ -250,7 +448,7 @@ export function ListingForm({ initial }: Props) {
         <Button
           type="button"
           variant="outline"
-          disabled={submitting !== null}
+          disabled={submitting !== null || uploading}
           onClick={() => submit("draft")}
         >
           {submitting === "draft" && (
