@@ -1,7 +1,7 @@
 {
   "name": "Data Marketplace Hub",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
-  "postCreateCommand": "npm install && printf 'VITE_SUPABASE_URL=https://ykurxoghlfvnussealkx.supabase.co\nVITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrdXJ4b2dobGZ2bnVzc2VhbGt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzYxMzEsImV4cCI6MjA5MjExMjEzMX0.T1XbGxVZliYaDtIqU_gR4ve0YX_u_N7xAnqOxChh7kE\nVITE_SUPABASE_PROJECT_ID=ykurxoghlfvnussealkx\n' > .env",
+  "postCreateCommand": "npm install && printf 'VITE_SUPABASE_URL=https://dvzgroihdhuozyibexfm.supabase.co\nVITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_u9PqCDdNstLzkOqU1eXKRw_9qXh2vo4\nVITE_SUPABASE_PROJECT_ID=dvzgroihdhuozyibexfm\n' > .env",
   "postStartCommand": "npm run dev -- --host --port 3000",
   "forwardPorts": [3000],
   "portsAttributes": {
