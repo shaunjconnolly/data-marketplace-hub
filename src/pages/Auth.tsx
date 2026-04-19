@@ -110,18 +110,6 @@ const Auth = () => {
     setTab("sign-in");
   }
 
-  async function handleGoogle() {
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin + next },
-    });
-    if (error) {
-      setBusy(false);
-      toast.error(error.message ?? "Google sign-in failed");
-    }
-  }
-
   if (verificationSent) {
     return (
       <CenteredCard>
@@ -165,17 +153,6 @@ const Auth = () => {
         </TabsList>
 
         <TabsContent value="sign-in" className="mt-6 space-y-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogle}
-            disabled={busy}
-          >
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Continue with Google
-          </Button>
-          <Divider>or</Divider>
           <form onSubmit={handleSignIn} className="space-y-3">
             <FieldEmail value={email} onChange={setEmail} />
             <FieldPassword value={password} onChange={setPassword} />
@@ -195,17 +172,6 @@ const Auth = () => {
         </TabsContent>
 
         <TabsContent value="sign-up" className="mt-6 space-y-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogle}
-            disabled={busy}
-          >
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Continue with Google
-          </Button>
-          <Divider>or</Divider>
           <form onSubmit={handleSignUp} className="space-y-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
