@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig(({ mode }) => ({
-  base: mode === "production" ? "/data-marketplace-hub/" : "/",
+  base: process.env.GITHUB_PAGES === "true" ? "/data-marketplace-hub/" : "/",
   server: {
     host: "::",
     port: 3000,
