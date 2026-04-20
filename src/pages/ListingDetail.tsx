@@ -139,30 +139,15 @@ const ListingDetail = () => {
     );
     setPurchasing(true);
     try {
-      const total = +(listing.price_per_record * count).toFixed(4);
-      const { data, error } = await supabase
-        .from("purchases")
-        .insert({
-          listing_id: listing.id,
-          buyer_id: user.id,
-          price_per_record: listing.price_per_record,
-          record_count: count,
-          total_amount: total,
-          currency: listing.currency,
-          payment_provider: "mock",
-          payment_status: "paid",
-          paid_at: new Date().toISOString(),
-        })
-        .select("id, payment_status")
-        .single();
+      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+        body: { listing_id: listing.id, record_count: count },
+      });
       if (error) throw error;
-      setPurchase(data as Purchase);
-      setPurchaseDialogOpen(false);
-      toast.success("Purchase confirmed. The download is ready.");
+      if (!data?.url) throw new Error("No checkout URL returned");
+      window.location.href = data.url;
     } catch (err) {
-      captureError(err, { scope: "listingDetail.purchase" });
-      toast.error(err instanceof Error ? err.message : "Could not complete purchase");
-    } finally {
+      captureError(err, { scope: "listingDetail.checkout" });
+      toast.error(err instanceof Error ? err.message : "Could not start checkout");
       setPurchasing(false);
     }
   }
@@ -365,7 +350,7 @@ const ListingDetail = () => {
                       Confirm purchase
                     </Button>
                     <p className="text-center text-xs text-muted-foreground">
-                      Seller approved your request. Mock payment for now.
+                      Seller approved your request. Pay securely via Stripe.
                     </p>
                   </>
                 ) : requestStatus ? (
@@ -430,8 +415,8 @@ const ListingDetail = () => {
           <DialogHeader>
             <DialogTitle>Confirm purchase</DialogTitle>
             <DialogDescription>
-              Choose how many records you're buying. This is a mock payment —
-              no card will be charged.
+              Choose how many records you're buying. You'll be taken to Stripe
+              to complete payment securely.
             </DialogDescription>
           </DialogHeader>
 

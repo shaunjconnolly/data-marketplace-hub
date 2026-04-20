@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Download, Loader2, Receipt } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { CheckCircle2, Download, Loader2, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ type Row = {
 
 const Purchases = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const paymentSuccess = searchParams.get("payment") === "success";
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -102,6 +104,15 @@ const Purchases = () => {
           </p>
         </div>
       </div>
+
+      {paymentSuccess && (
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+            Payment successful! Your purchase is confirmed — download is ready below.
+          </p>
+        </div>
+      )}
 
       <div
         className="mt-8 overflow-hidden rounded-2xl border border-border bg-card"
