@@ -7,6 +7,7 @@ import {
   Bell,
   ShieldCheck,
   Receipt,
+  Wallet,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -32,6 +33,7 @@ const NAV = [
   { title: "My listings", url: "/dashboard/listings", icon: Database },
   { title: "Requests", url: "/dashboard/requests", icon: Inbox },
   { title: "Purchases", url: "/dashboard/purchases", icon: Receipt },
+  { title: "Payouts", url: "/dashboard/payouts", icon: Wallet },
   { title: "Marketplace", url: "/marketplace", icon: ShoppingBag },
 ];
 

@@ -1,5 +1,5 @@
 import { Outlet, NavLink as RouterNavLink } from "react-router-dom";
-import { ShieldCheck, Users, Database, Mail, ArrowLeft, LayoutList, Inbox, Activity, ScanSearch, Scale } from "lucide-react";
+import { ShieldCheck, Users, Database, Mail, ArrowLeft, LayoutList, Inbox, Activity, ScanSearch, Scale, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -11,6 +11,7 @@ const NAV = [
   { to: "/admin/users", label: "Users & roles", icon: Users },
   { to: "/admin/anonymisation", label: "Anonymisation", icon: ScanSearch },
   { to: "/admin/gdpr", label: "GDPR requests", icon: Scale },
+  { to: "/admin/payouts", label: "Payouts", icon: Wallet },
   { to: "/admin/monitoring", label: "Monitoring", icon: Activity },
   { to: "/admin/pages", label: "Pages", icon: LayoutList },
 ];
