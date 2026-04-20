@@ -23,6 +23,11 @@ import {
 } from "@/validation/listing";
 import { LISTING_CATEGORIES, type ListingStatus } from "@/lib/listings";
 import { captureError } from "@/lib/events";
+import {
+  AnonymisationStatus,
+  canPublish,
+  type AnonJob,
+} from "./AnonymisationStatus";
 
 type Props = {
   initial?: Partial<ListingFormValues> & {
@@ -75,11 +80,11 @@ export function ListingForm({ initial }: Props) {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState<null | "draft" | "published">(
-    null,
-  );
+  const [submitting, setSubmitting] = useState<null | "draft" | "published">(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [anonJob, setAnonJob] = useState<AnonJob | null>(null);
+  const [analysing, setAnalysing] = useState(false);
 
   function update<K extends keyof ListingFormValues>(
     key: K,
@@ -162,6 +167,27 @@ export function ListingForm({ initial }: Props) {
       toast.success(
         `Parsed ${parseData?.total_records ?? 0} records from ${selected.name}`,
       );
+
+      // Kick off anonymisation analysis
+      setAnalysing(true);
+      try {
+        const { data: anonData, error: anonErr } =
+          await supabase.functions.invoke("anonymise-dataset", {
+            body: { listing_id: initial?.id ?? null, file_path: path },
+          });
+        if (anonErr) throw anonErr;
+        setAnonJob(anonData as AnonJob);
+        if ((anonData as AnonJob).flagged_for_review) {
+          toast.warning("Dataset flagged for admin review — publishing blocked.");
+        } else if ((anonData as AnonJob).risk_score != null && (anonData as AnonJob).risk_score! >= 0.30) {
+          toast.warning("Medium-risk PII detected. Remove flagged fields before publishing.");
+        }
+      } catch (anonErr) {
+        captureError(anonErr, { scope: "listing.anonymise" });
+        setAnonJob({ job_id: "", status: "failed", risk_score: null, detected_fields: [], removed_fields: [], flagged_for_review: false, row_count: 0, error: "Analysis failed" });
+      } finally {
+        setAnalysing(false);
+      }
     } catch (err) {
       captureError(err, { scope: "listing.upload" });
       toast.error(
@@ -185,6 +211,7 @@ export function ListingForm({ initial }: Props) {
       captureError(err, { scope: "listing.removeFile" });
     }
     setFile({ path: null, size: null, mime: null, name: null });
+    setAnonJob(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -199,6 +226,18 @@ export function ListingForm({ initial }: Props) {
       }
       setErrors(fieldErrors);
       toast.error("Please fix the highlighted fields");
+      return;
+    }
+
+    // Block publish until anonymisation passes
+    if (targetStatus === "published" && file.path && !canPublish(anonJob)) {
+      toast.error(
+        anonJob === null || analysing
+          ? "Wait for the PII scan to complete before publishing."
+          : anonJob.flagged_for_review
+          ? "Publishing blocked — dataset is flagged for admin review."
+          : "Risk score too high. Remove the flagged fields before publishing.",
+      );
       return;
     }
 
@@ -333,6 +372,7 @@ export function ListingForm({ initial }: Props) {
           Stored privately. Only you and the buyers you approve can access it.
           Max 50&nbsp;MB.
         </p>
+        <AnonymisationStatus job={anonJob} analysing={analysing} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
