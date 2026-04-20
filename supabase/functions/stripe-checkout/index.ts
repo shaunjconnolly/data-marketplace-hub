@@ -23,6 +23,7 @@ function json(data: unknown, status = 200) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  try {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
@@ -132,4 +133,9 @@ Deno.serve(async (req) => {
     .eq("id", purchase.id);
 
   return json({ url: session.url });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("stripe-checkout error:", message);
+    return json({ error: message }, 500);
+  }
 });
