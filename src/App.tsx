@@ -31,6 +31,7 @@ import AdminPages from "./pages/admin/AdminPages.tsx";
 import AdminRequests from "./pages/admin/AdminRequests.tsx";
 import AdminMonitoring from "./pages/admin/AdminMonitoring.tsx";
 import AdminAnonymisation from "./pages/admin/AdminAnonymisation.tsx";
+import AdminGdpr from "./pages/admin/AdminGdpr.tsx";
 import AnonymisationJob from "./pages/AnonymisationJob.tsx";
 import Setup from "./pages/Setup.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -90,6 +91,7 @@ const App = () => (
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/monitoring" element={<AdminMonitoring />} />
                 <Route path="/admin/anonymisation" element={<AdminAnonymisation />} />
+                <Route path="/admin/gdpr" element={<AdminGdpr />} />
                 <Route path="/admin/pages" element={<AdminPages />} />
               </Route>
             </Route>
