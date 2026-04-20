@@ -88,23 +88,20 @@ const ListingDetail = () => {
     const count = Math.max(1, Math.min(listing.total_records, Math.floor(recordCount || 0)));
     setPurchasing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
-        body: { listing_id: listing.id, record_count: count },
+      const { data: { session } } = await supabase.auth.getSession();
+      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
+      const res = await fetch(fnUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ listing_id: listing.id, record_count: count }),
       });
-      if (error) {
-        const ctx = (error as { context?: Response }).context;
-        if (ctx) {
-          try {
-            const body = await ctx.json();
-            throw new Error(body?.error ?? error.message);
-          } catch (parseErr) {
-            if (parseErr instanceof Error && parseErr.message !== error.message) throw parseErr;
-          }
-        }
-        throw error;
-      }
-      if (!data?.url) throw new Error("No checkout URL returned");
-      window.location.href = data.url;
+      const result = await res.json();
+      if (!res.ok || result.error) throw new Error(result.error ?? "Checkout failed");
+      window.location.href = result.url;
     } catch (err) {
       captureError(err, { scope: "listingDetail.checkout" });
       toast.error(err instanceof Error ? err.message : "Could not start checkout");
