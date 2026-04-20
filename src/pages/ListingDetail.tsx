@@ -91,7 +91,18 @@ const ListingDetail = () => {
       const { data, error } = await supabase.functions.invoke("stripe-checkout", {
         body: { listing_id: listing.id, record_count: count },
       });
-      if (error) throw error;
+      if (error) {
+        const ctx = (error as { context?: Response }).context;
+        if (ctx) {
+          try {
+            const body = await ctx.json();
+            throw new Error(body?.error ?? error.message);
+          } catch (parseErr) {
+            if (parseErr instanceof Error && parseErr.message !== error.message) throw parseErr;
+          }
+        }
+        throw error;
+      }
       if (!data?.url) throw new Error("No checkout URL returned");
       window.location.href = data.url;
     } catch (err) {
