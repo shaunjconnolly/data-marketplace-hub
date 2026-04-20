@@ -99,9 +99,12 @@ const ListingDetail = () => {
         },
         body: JSON.stringify({ listing_id: listing.id, record_count: count }),
       });
-      const result = await res.json();
-      if (!res.ok || result.error) throw new Error(result.error ?? "Checkout failed");
-      window.location.href = result.url;
+      const text = await res.text();
+      let result: Record<string, unknown> = {};
+      try { result = JSON.parse(text); } catch { throw new Error(`Non-JSON response (${res.status}): ${text.slice(0, 200)}`); }
+      if (!res.ok || result.error) throw new Error((result.error as string) ?? `HTTP ${res.status}: ${text.slice(0, 200)}`);
+      if (!result.url) throw new Error(`No URL in response: ${text.slice(0, 200)}`);
+      window.location.href = result.url as string;
     } catch (err) {
       captureError(err, { scope: "listingDetail.checkout" });
       toast.error(err instanceof Error ? err.message : "Could not start checkout");
