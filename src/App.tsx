@@ -35,6 +35,7 @@ import AdminGdpr from "./pages/admin/AdminGdpr.tsx";
 import AdminPayouts from "./pages/admin/AdminPayouts.tsx";
 import AdminSql from "./pages/admin/AdminSql.tsx";
 import AnonymisationJob from "./pages/AnonymisationJob.tsx";
+import Analytics from "./pages/Analytics.tsx";
 import Payouts from "./pages/Payouts.tsx";
 import Setup from "./pages/Setup.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -75,6 +76,7 @@ const App = () => (
                 />
                 <Route path="/dashboard/requests" element={<Requests />} />
                 <Route path="/dashboard/purchases" element={<Purchases />} />
+                <Route path="/dashboard/analytics" element={<Analytics />} />
                 <Route path="/dashboard/payouts" element={<Payouts />} />
                 <Route
                   path="/dashboard/notifications"

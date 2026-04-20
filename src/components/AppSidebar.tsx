@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Receipt,
   Wallet,
+  BarChart2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -33,6 +34,7 @@ const NAV = [
   { title: "My listings", url: "/dashboard/listings", icon: Database },
   { title: "Requests", url: "/dashboard/requests", icon: Inbox },
   { title: "Purchases", url: "/dashboard/purchases", icon: Receipt },
+  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart2 },
   { title: "Payouts", url: "/dashboard/payouts", icon: Wallet },
   { title: "Marketplace", url: "/marketplace", icon: ShoppingBag },
 ];
