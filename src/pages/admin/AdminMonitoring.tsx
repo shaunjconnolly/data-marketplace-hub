@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Bug, Info, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Bug, CheckCircle2, Info, Loader2, RefreshCw, ShieldCheck, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,22 @@ const AdminMonitoring = () => {
   }
 
   useEffect(() => { load(); }, []);
+
+  type ChainBreak = { broken_id: string; broken_at: string; action: string; stored_prev: string; expected_prev: string };
+  const [chainResult, setChainResult] = useState<{ ok: boolean; breaks: ChainBreak[] } | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  async function verifyChain() {
+    setVerifying(true);
+    setChainResult(null);
+    const { data, error } = await supabase.rpc("verify_audit_chain");
+    setVerifying(false);
+    if (error) { toast.error("Verification failed: " + error.message); return; }
+    const breaks = (data ?? []) as ChainBreak[];
+    setChainResult({ ok: breaks.length === 0, breaks });
+    if (breaks.length === 0) toast.success("Audit chain intact — no tampering detected");
+    else toast.error(`${breaks.length} chain break${breaks.length !== 1 ? "s" : ""} detected`);
+  }
 
   const filteredErrors = useMemo(() => {
     if (!errors) return [];
@@ -166,12 +182,73 @@ const AdminMonitoring = () => {
 
         {/* ── Audit log ──────────────────────────────────────── */}
         <TabsContent value="audit" className="mt-4">
-          <Input
-            value={auditSearch}
-            onChange={(e) => setAuditSearch(e.target.value)}
-            placeholder="Search actions, entity types, actor IDs…"
-            className="max-w-xs"
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <Input
+              value={auditSearch}
+              onChange={(e) => setAuditSearch(e.target.value)}
+              placeholder="Search actions, entity types, actor IDs…"
+              className="max-w-xs"
+            />
+            <Button variant="outline" size="sm" onClick={verifyChain} disabled={verifying}>
+              {verifying ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="mr-2 h-4 w-4" />
+              )}
+              Verify chain integrity
+            </Button>
+          </div>
+
+          {chainResult && (
+            <div
+              className={`mt-3 flex items-start gap-3 rounded-2xl border p-4 ${
+                chainResult.ok
+                  ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+                  : "border-destructive/20 bg-destructive/5"
+              }`}
+            >
+              {chainResult.ok ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+              ) : (
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  {chainResult.ok
+                    ? "Audit chain intact — no tampering detected."
+                    : `${chainResult.breaks.length} chain break${chainResult.breaks.length !== 1 ? "s" : ""} detected — possible tampering.`}
+                </p>
+                {!chainResult.ok && (
+                  <div className="mt-3 overflow-x-auto rounded-lg border border-destructive/20">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-destructive/20 bg-destructive/10 text-left font-medium uppercase text-muted-foreground">
+                          <th className="px-3 py-2">Broken row</th>
+                          <th className="px-3 py-2">Time</th>
+                          <th className="px-3 py-2">Action</th>
+                          <th className="px-3 py-2">Stored prev</th>
+                          <th className="px-3 py-2">Expected prev</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-destructive/10">
+                        {chainResult.breaks.map((b) => (
+                          <tr key={b.broken_id}>
+                            <td className="px-3 py-2 font-mono">{b.broken_id.slice(0, 8)}…</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                              {new Date(b.broken_at).toLocaleString()}
+                            </td>
+                            <td className="px-3 py-2 font-mono">{b.action}</td>
+                            <td className="px-3 py-2 font-mono text-muted-foreground">{b.stored_prev.slice(0, 12)}…</td>
+                            <td className="px-3 py-2 font-mono text-muted-foreground">{b.expected_prev.slice(0, 12)}…</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
             {audit === null ? (
               <div className="flex justify-center py-12">
