@@ -66,6 +66,11 @@ const AdminWaitlist = () => {
 
   useEffect(() => {
     load();
+    const channel = supabase
+      .channel("admin-waitlist")
+      .on("postgres_changes", { event: "*", schema: "public", table: "waitlist" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const filtered = useMemo(() => {
