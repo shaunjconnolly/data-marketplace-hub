@@ -1,8 +1,11 @@
 -- Admin SQL runner function.
 -- Allows authenticated admins to execute arbitrary SQL from the app.
--- SELECT/WITH/EXPLAIN → returns rows as JSONB array.
+-- SELECT/WITH/EXPLAIN/SHOW → returns rows as JSONB array.
 -- Everything else → executes and returns affected row count.
 -- Admin role is verified inside the function before anything runs.
+--
+-- NOTE: Uses FOR rec IN EXECUTE loop to avoid EXECUTE...INTO which
+-- the Supabase SQL editor misinterprets as CREATE TABLE AS SELECT.
 
 create or replace function public.admin_execute_sql(p_sql text)
 returns jsonb
@@ -11,7 +14,8 @@ security definer
 set search_path = public, extensions
 as $$
 declare
-  v_result    jsonb;
+  v_rows      jsonb := '[]'::jsonb;
+  v_rec       record;
   v_count     integer;
   v_norm      text;
 begin
@@ -27,15 +31,14 @@ begin
   or v_norm like 'EXPLAIN%'
   or v_norm like 'SHOW%'
   then
-    execute format(
-      'select coalesce(jsonb_agg(row_to_json(t)), ''[]''::jsonb) from (%s) t',
-      p_sql
-    ) into v_result;
+    for v_rec in execute p_sql loop
+      v_rows := v_rows || to_jsonb(v_rec);
+    end loop;
 
     return jsonb_build_object(
       'type',     'select',
-      'rows',     v_result,
-      'rowCount', jsonb_array_length(v_result)
+      'rows',     v_rows,
+      'rowCount', jsonb_array_length(v_rows)
     );
   else
     execute p_sql;

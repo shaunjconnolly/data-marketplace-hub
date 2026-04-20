@@ -2,7 +2,6 @@
 // Validates input, inserts to waitlist, logs audit event, captures errors.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { checkRateLimit, getClientIp, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,10 +34,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
-  // 5 signups per IP per minute — tight limit since this is a public endpoint
-  const { limited } = await checkRateLimit(getClientIp(req), "waitlist-join", 5);
-  if (limited) return rateLimitedResponse(corsHeaders);
 
   try {
     const json = await req.json().catch(() => null);
